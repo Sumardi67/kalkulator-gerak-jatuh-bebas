@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Kalkulator Gerak Jatuh Bebas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;700&display=swap">
+<!-- PYSCRIPT: Engine untuk menjalankan Python di dalam HTML -->
+<link rel="stylesheet" href="https://pyscript.net/releases/2023.11.1/core.css" />
+<script type="module" src="https://pyscript.net/releases/2023.11.1/core.js"></script>
+
+<style>
+:root{color-scheme:dark;--bg:#0c1422;--panel:#142036;--line:#27395a;--tx:#e8eef8;--mut:#9fb0c9;--ball:#ffb347;--v:#5ec8ff;--a:#ff7d7d;--ok:#6fdc9a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.65 Onest,system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.w{max-width:1180px;margin:0 auto;padding:0 18px}
+header{padding:34px 0 22px}
+h1{font-size:clamp(2rem,5.5vw,3.4rem);line-height:1.08;margin:0 0 10px;letter-spacing:-.02em}
+h2{font-size:1.45rem;margin:0 0 6px}
+h3{font-size:1.05rem;margin:18px 0 6px}
+p{max-width:68ch;color:var(--mut);margin:.4em 0}
+b{color:var(--tx)}
+section{padding:26px 0;border-top:1px solid var(--line)}
+.grid{display:grid;gap:18px}
+@media(min-width:900px){.two{grid-template-columns:1.15fr 1fr}.three{grid-template-columns:repeat(3,1fr)}}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+canvas{display:block;width:100%;border-radius:8px;background:#0a101c;touch-action:none}
+#stage{height:min(70vh,520px);cursor:grab}
+#stage:active{cursor:grabbing}
+.ch{height:230px;cursor:ew-resize}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:10px 0}
+button,.f{font:inherit;color:var(--tx);background:#0e192b;border:1px solid var(--line);border-radius:8px;padding:8px 12px;min-height:40px}
+button{cursor:pointer;transition:background .15s,border-color .15s}
+button:hover{border-color:var(--v);background:#12223a}
+button.on{background:var(--v);color:#04121f;border-color:var(--v)}
+button:disabled{opacity:0.5;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--ball);outline-offset:2px}
+.f{width:100%}
+label{display:block;font-size:.9rem;color:var(--mut);margin-bottom:4px}
+label.ck{display:flex;gap:8px;align-items:center;color:var(--tx);margin:6px 0}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--v)}
+input[type=range]{width:100%;accent-color:var(--ball)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:420px){.fields{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left}
+td.num{text-align:right;font-weight:700}
+.ok{color:var(--ok)}.bad{color:var(--a)}
+#msg{min-height:1.6em; font-weight: bold;}
+#msg.err{color:var(--a)}
+#msg.ok{color:var(--ok)}
+.stale{opacity:.4}
+.rd{display:flex;gap:18px;flex-wrap:wrap;color:var(--mut);margin:12px 0 0}
+li{margin:6px 0;color:var(--mut)}
+.fm{background:#0e192b;border:1px solid var(--line);border-radius:6px;padding:1px 7px;margin-right:6px;color:var(--tx);white-space:nowrap}
+figure{margin:0}
+figcaption{color:var(--mut);font-size:.9rem;margin-top:8px}
+footer{padding:22px 0 40px;color:var(--mut);font-size:.9rem;border-top:1px solid var(--line)}
+[data-tip]{border-bottom:1px dotted var(--v);cursor:help;position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:0;bottom:calc(100% + 8px);width:max-content;max-width:min(240px,70vw);background:#f2f6fc;color:#0c1422;padding:8px 10px;border-radius:8px;font-size:.85rem;line-height:1.4;opacity:0;pointer-events:none;transition:opacity .15s;z-index:9;white-space:normal}
+[data-tip]:hover::after,[data-tip]:focus::after{opacity:1}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="w">
+<header>
+  <h1>Gerak jatuh bebas</h1>
+  <p>Lepaskan sebuah bola dari ketinggian tertentu. Isi dua besaran yang kamu tahu, lalu lihat sisanya dihitung oleh <b>Mesin Python</b>.</p>
+</header>
+
+<section id="sim" class="grid two">
+  <canvas id="stage" aria-label="Simulasi bola jatuh. Seret bola ke atas atau bawah untuk mengubah tinggi."></canvas>
+  <div class="box">
+    <h2>Simulasi</h2>
+    <p>Seret bola ke atas atau bawah untuk mengubah tinggi awal.</p>
+    <div class="row"><button id="play" class="on" disabled>Jatuhkan</button><button id="reset" disabled>Ulangi dari atas</button></div>
+    <label for="ts">Geser waktu</label>
+    <input id="ts" type="range" min="0" max="1000" value="0">
+    <div class="row">Kecepatan putar
+      <button class="spd" data-s=".25">0,25×</button><button class="spd" data-s=".5">0,5×</button><button class="spd on" data-s="1">1×</button><button class="spd" data-s="2">2×</button>
+    </div>
+    <div class="row">Gravitasi <span id="planets" class="row" style="margin:0"></span></div>
+    <label class="ck"><input type="checkbox" id="tv" checked> Panah kecepatan (biru)</label>
+    <label class="ck"><input type="checkbox" id="ta" checked> Panah percepatan (merah)</label>
+    <label class="ck"><input type="checkbox" id="tg" checked> Bayangan bola tiap selang waktu sama</label>
+    <p class="rd">Waktu <b id="rt">0</b> s &nbsp; Tinggi dari tanah <b id="ry">0</b> m &nbsp; Kecepatan <b id="rv">0</b> m/s</p>
+  </div>
+</section>
+
+<section id="calc" class="grid two">
+  <div class="box">
+    <h2>Kalkulator Python</h2>
+    <p>Isi <b>dua</b> kotak mana saja. Kotak kosong berarti belum diketahui.</p>
+    <div class="fields" id="fields"></div>
+    <div class="row" id="ex"></div>
+    <p id="msg" role="status" class="err">Menyiapkan mesin Python, mohon tunggu...</p>
+  </div>
+  <div class="box stale" id="out">
+    <h2>Hasil</h2>
+    <table><thead><tr><th>Besaran</th><th style="text-align:right">Nilai</th><th>Satuan</th><th>Asal</th></tr></thead><tbody id="tbody"></tbody></table>
+    <div id="ins"></div>
+    <h3>Cara menghitungnya</h3>
+    <p id="pairtxt"></p>
+    <ol id="steps"></ol>
+    <h3>Pemeriksaan</h3>
+    <table><tbody id="vbody"></tbody></table>
+  </div>
+</section>
+
+<section id="charts">
+  <h2>Grafik</h2>
+  <div class="grid three">
+    <figure class="box"><canvas id="ct" class="ch" aria-label="Grafik kecepatan terhadap waktu"></canvas><figcaption><b>v terhadap t.</b></figcaption></figure>
+    <figure class="box"><canvas id="chh" class="ch" aria-label="Grafik jarak jatuh terhadap waktu"></canvas><figcaption><b>Jarak terhadap t.</b></figcaption></figure>
+    <figure class="box"><canvas id="cv" class="ch" aria-label="Grafik kecepatan terhadap jarak jatuh"></canvas><figcaption><b>v terhadap jarak.</b></figcaption></figure>
+  </div>
+</section>
+
+<footer>Skrip ini didukung langsung oleh Python (PyScript) di dalam browser Anda.</footer>
+</div>
+
+<!-- SKRIP PYTHON -->
+<script type="py">
+import json
+import math
+import js
+
+PAIR_PRIORITY = [("g", "t"), ("g", "h"), ("g", "v"), ("h", "t"), ("h", "v"), ("v", "t")]
+
+def _solve_pair(pair, a, b):
+    k = {pair[0]: a, pair[1]: b}
+    if pair == ("g", "t"):
+        g, t = k["g"], k["t"]
+        v = g * t
+        h = 0.5 * g * (t**2)
+    elif pair == ("g", "h"):
+        g, h = k["g"], k["h"]
+        if g == 0: 
+            if h == 0: raise ValueError("g=0 dan h=0: waktu jatuh tak tentu.")
+            raise ValueError("Jika percepatan (g) 0, tidak mungkin jatuh setinggi h>0.")
+        t = math.sqrt(2 * h / g)
+        v = g * t
+    elif pair == ("g", "v"):
+        g, v = k["g"], k["v"]
+        if g == 0: 
+            if v == 0: raise ValueError("g=0 dan v=0: waktu jatuh tak tentu.")
+            raise ValueError("Jika g=0, kecepatan tidak mungkin bertambah.")
+        t = v / g
+        h = (v**2) / (2 * g)
+    elif pair == ("h", "t"):
+        h, t = k["h"], k["t"]
+        if t == 0:
+            if h == 0: raise ValueError("h=0 dan t=0: gravitasi tak tentu.")
+            raise ValueError("Benda tidak mungkin jatuh sejauh h>0 dalam waktu 0.")
+        g = 2 * h / (t**2)
+        v = 2 * h / t
+    elif pair == ("h", "v"):
+        h, v = k["h"], k["v"]
+        if h == 0 and v == 0: raise ValueError("h=0 dan v=0: waktu tak tentu.")
+        if h == 0 or v == 0: raise ValueError("h dan v harus sejalan.")
+        t = 2 * h / v
+        g = (v**2) / (2 * h)
+    elif pair == ("v", "t"):
+        v, t = k["v"], k["t"]
+        if t == 0:
+            if v == 0: raise ValueError("v=0 dan t=0: gravitasi tak tentu.")
+            raise ValueError("Kecepatan > 0 pada waktu 0 butuh gravitasi tak hingga.")
+        g = v / t
+        h = 0.5 * v * t
+    return {"v": v, "h": h, "t": t, "g": g}
+
+def python_solve(json_str):
+    kn = json.loads(json_str)
+    result = None
+    used_pair = None
+    first_error = None
+    for pair in PAIR_PRIORITY:
+        if pair[0] in kn and pair[1] in kn:
+            try:
+                result = _solve_pair(pair, kn[pair[0]], kn[pair[1]])
+                used_pair = pair
+                break
+            except ValueError as err:
+                first_error = first_error or str(err)
+    if result is None:
+        return json.dumps({"status": "error", "message": first_error or "Data tidak valid atau kurang."})
+    return json.dumps({"status": "success", "res": result, "pair": used_pair})
+
+js.window.pythonSolve = python_solve
+js.window.pythonReady()
+</script>
+
+<!-- SKRIP JAVASCRIPT -->
+<script>
+const CONFIG = {
+  objek: { nama: "Bola", warna: "#ffb347", radius: 13 },
+  planet: { Bumi: 9.8, Bulan: 1.62, Mars: 3.71, Jupiter: 24.79 },
+  besaran: {
+    v: { nama: "Kecepatan akhir", sat: "m/s", tip: "Sesaat sebelum menyentuh tanah." },
+    h: { nama: "Tinggi jatuh", sat: "m", tip: "Jarak lurus dari rilis ke tanah." },
+    t: { nama: "Waktu jatuh", sat: "s", tip: "Lama melayang." },
+    g: { nama: "Percepatan", sat: "m/s²", tip: "Boleh ketik nama planet." }
+  },
+  toleransi: 0.01,
+  contoh: [
+    { l: "Jatuh 20 m di Bumi", h: 20, g: "bumi" },
+    { l: "3 detik di Bulan", t: 3, g: "bulan" }
+  ]
+};
+
+const C = CONFIG, K = ["v","h","t","g"];
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const n = x => Number(x.toPrecision(6)).toLocaleString("id-ID", { maximumFractionDigits: 6, useGrouping: false });
+const fall = t => .5 * S.g * t * t;
+
+let isPythonReady = false;
+window.pythonReady = () => {
+  isPythonReady = true;
+  msg("Sistem Python aktif. Siap digunakan!", "ok");
+  $("#play").disabled = false;
+  $("#reset").disabled = false;
+  recalc(true);
+};
+
+function solve(kn) {
+  if (!isPythonReady) throw new Error("Menyiapkan mesin Python...");
+  const pyResponse = window.pythonSolve(JSON.stringify(kn));
+  const out = JSON.parse(pyResponse);
+  if (out.status === "error") throw new Error(out.message);
+  const bad = Object.keys(kn).filter(k => Math.abs(out.res[k] - kn[k]) > Math.max(1e-9, C.toleransi * Math.max(Math.abs(out.res[k]), Math.abs(kn[k]))));
+  if (bad.length) throw new Error("Isian bertentangan dengan hukum fisika.");
+  return { res: out.res, pair: out.pair };
+}
+
+function check(r) {
+  const { v, h, t, g } = r;
+  const c = [["v = g·t", v, g * t], ["h = ½·g·t²", h, .5 * g * t * t], ["v² = 2·g·h", v * v, 2 * g * h], ["h = ½·v·t", h, .5 * v * t]];
+  if (t > 0) c.push(["v = 2h/t", v, 2 * h / t]);
+  return c.map(([e, a, b]) => [e, a, b, Math.abs(a - b) <= Math.max(1e-9, 1e-9 * Math.max(Math.abs(a), Math.abs(b)))]);
+}
+
+const F = {
+  gt: [r => `v = g·t = ${n(r.g)} × ${n(r.t)} = ${n(r.v)} m/s`, r => `h = ½·g·t² = ½ × ${n(r.g)} × ${n(r.t)}² = ${n(r.h)} m`],
+  gh: [r => `t = √(2h/g) = √(2 × ${n(r.h)} / ${n(r.g)}) = ${n(r.t)} s`, r => `v = g·t = ${n(r.g)} × ${n(r.t)} = ${n(r.v)} m/s`],
+  gv: [r => `t = v/g = ${n(r.v)} / ${n(r.g)} = ${n(r.t)} s`, r => `h = v²/(2g) = ${n(r.v)}² / (2 × ${n(r.g)}) = ${n(r.h)} m`],
+  ht: [r => `g = 2h/t² = 2 × ${n(r.h)} / ${n(r.t)}² = ${n(r.g)} m/s²`, r => `v = 2h/t = 2 × ${n(r.h)} / ${n(r.t)} = ${n(r.v)} m/s`],
+  hv: [r => `t = 2h/v = 2 × ${n(r.h)} / ${n(r.v)} = ${n(r.t)} s`, r => `g = v²/(2h) = ${n(r.v)}² / (2 × ${n(r.h)}) = ${n(r.g)} m/s²`],
+  vt: [r => `g = v/t = ${n(r.v)} / ${n(r.t)} = ${n(r.g)} m/s²`, r => `h = ½·v·t = ½ × ${n(r.v)} × ${n(r.t)} = ${n(r.h)} m`]
+};
+
+const S = { g: 9.8, h: 20, v: 0, T: 2, t: 0, play: false, spd: 1, res: null, pair: null };
+let drag = null, LY = {}, last = 0;
+const css = getComputedStyle(document.documentElement), col = v => css.getPropertyValue(v).trim();
+
+function readInputs() {
+  const kn = {};
+  for (const k of K) {
+    const s = $("#in-" + k).value.trim().toLowerCase();
+    if (!s) continue;
+    if (k === "g") { const pk = Object.keys(C.planet).find(p => p.toLowerCase() === s); if (pk) { kn.g = C.planet[pk]; continue; } }
+    const x = Number(s.replace(",", "."));
+    if (!isFinite(x)) throw new Error(`${C.besaran[k].nama}: harus angka.`);
+    if (x < 0) throw new Error(`${C.besaran[k].nama} tidak boleh negatif.`);
+    kn[k] = x;
+  }
+  return kn;
+}
+const setIn = o => K.forEach(k => $("#in-" + k).value = k in o ? (typeof o[k] === "number" ? n(o[k]) : o[k]) : "");
+const msg = (t, c) => { const m = $("#msg"); m.textContent = t; m.className = c || ""; };
+
+function recalc(drop) {
+  try {
+    const kn = readInputs();
+    if (Object.keys(kn).length < 2) { msg("Isi dua kotak mana saja."); $("#out").classList.add("stale"); draw(); return; }
+    const { res, pair } = solve(kn);
+    Object.assign(S, { res, pair, g: res.g, h: res.h, T: res.t, v: res.v });
+    S.t = drop ? 0 : Math.min(S.t, S.T);
+    if (drop) S.play = true;
+    msg(""); $("#out").classList.remove("stale"); showResults(kn);
+  } catch (e) { msg(e.message, "err"); $("#out").classList.add("stale"); }
+  draw();
+}
+
+function showResults(kn) {
+  const r = S.res;
+  $("#tbody").innerHTML = K.map(k => `<tr><td>${C.besaran[k].nama} (<b>${k}</b>)</td><td class="num">${n(r[k])}</td><td>${C.besaran[k].sat}</td><td>${k in kn ? "kamu isi" : "dihitung Python"}</td></tr>`).join("");
+  $("#pairtxt").textContent = `Input kamu: ${S.pair[0]} dan ${S.pair[1]}. Rumus dari Python yang dipakai:`;
+  $("#steps").innerHTML = F[S.pair.join("")].map(f => `<li>${f(r)}</li>`).join("");
+  $("#vbody").innerHTML = check(r).map(([e, a, b, ok]) => `<tr><td>${e}</td><td class="num">${n(a)}</td><td class="num">${n(b)}</td><td class="${ok ? "ok" : "bad"}">${ok ? "sesuai" : "gagal"}</td></tr>`).join("");
+}
+
+function fit(c) {
+  const r = c.getBoundingClientRect(), d = window.devicePixelRatio || 1, w = Math.round(r.width * d), h = Math.round(r.height * d);
+  if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
+  const x = c.getContext("2d"); x.setTransform(d, 0, 0, d, 0, 0);
+  return [x, r.width, r.height];
+}
+const axis = h => { const m = Math.max(h * 1.2, 2), p = 10 ** Math.floor(Math.log10(m)); return [1, 2, 5, 10].map(f => f * p).find(v => v >= m); };
+function arrow(x, px, y0, len, color, label) { if(len<3) return; x.strokeStyle = x.fillStyle = color; x.lineWidth = 2.5; x.beginPath(); x.moveTo(px, y0); x.lineTo(px, y0 + len); x.stroke(); x.beginPath(); x.moveTo(px, y0 + len + 8); x.lineTo(px - 5, y0 + len - 2); x.lineTo(px + 5, y0 + len - 2); x.fill(); x.textAlign = "left"; x.fillText(label, px + 8, y0 + len / 2); }
+
+function drawStage() {
+  const st = $("#stage"), [x, W, H] = fit(st), r = C.objek.radius, top = 26, gy = H - 40, cx = W * .58;
+  const AX = drag ? drag.AX : axis(S.h), py = m => gy - m / AX * (gy - top);
+  LY = { top, gy, AX, r, cx };
+  x.clearRect(0, 0, W, H); x.font = "12px Onest,sans-serif"; x.textBaseline = "middle";
+  for (let i = 0; i <= 5; i++) {
+    const m = AX * i / 5, yy = py(m);
+    x.strokeStyle = col("--line"); x.beginPath(); x.moveTo(60, yy); x.lineTo(W, yy); x.stroke();
+    x.fillStyle = col("--mut"); x.textAlign = "right"; x.fillText(n(m) + " m", 52, yy);
+  }
+  x.fillStyle = "#1b2c48"; x.fillRect(0, gy + 1, W, H - gy);
+  x.fillStyle = col("--mut"); x.textAlign = "left"; x.fillText(`Gravitasi g = ${n(S.g)} m/s²`, 16, gy + 22);
+  const by = py(Math.max(0, S.h - fall(S.t))) - r;
+  if ($("#tg").checked && S.T > 0) for (let i = 0; i <= 10; i++) {
+    const ti = S.T * i / 10; if (ti > S.t + 1e-9) break;
+    x.strokeStyle = C.objek.warna; x.globalAlpha = .4; x.beginPath(); x.arc(cx - 64, py(Math.max(0, S.h - fall(ti))) - r, r, 0, 7); x.stroke(); x.globalAlpha = 1;
+  }
+  const vm = S.g * S.T;
+  if ($("#tv").checked && vm) arrow(x, cx + 36, by, 90 * S.g * S.t / vm, col("--v"), "v");
+  if ($("#ta").checked && S.g > 0) arrow(x, cx - 32, by, 44, col("--a"), "a = g");
+  x.fillStyle = C.objek.warna; x.beginPath(); x.arc(cx, by, r, 0, 7); x.fill();
+  x.strokeStyle = "#0c1422"; x.lineWidth = 2; x.stroke(); x.lineWidth = 1;
+}
+
+function chart(c, o) {
+  const [x, W, H] = fit(c), L = 48, R = 14, T = 16, B = 28, pw = W - L - R, ph = H - T - B, XM = o.xm || 1, YM = o.ym || 1;
+  const X = u => L + u / XM * pw, Y = u => T + ph - u / YM * ph;
+  c._o = { xm: XM, toT: o.toT }; c._L = L; c._pw = pw;
+  x.clearRect(0, 0, W, H); x.font = "11px Onest,sans-serif"; x.textBaseline = "alphabetic";
+  for (let i = 0; i <= 4; i++) {
+    const gx = L + pw * i / 4, gy = T + ph * i / 4;
+    x.strokeStyle = col("--line"); x.beginPath(); x.moveTo(gx, T); x.lineTo(gx, T + ph); x.moveTo(L, gy); x.lineTo(L + pw, gy); x.stroke();
+    x.fillStyle = col("--mut"); x.textAlign = "center"; x.fillText(n(Math.round(XM * i / 4 * 100) / 100), gx, H - 10);
+    x.textAlign = "right"; x.fillText(n(Math.round(YM * (4 - i) / 4 * 100) / 100), L - 6, gy + 4);
+  }
+  x.textAlign = "left"; x.fillText(o.yl, L + 4, T + 12); x.textAlign = "right"; x.fillText(o.xl, L + pw, T + ph - 6);
+  const path = to => { x.beginPath(); for (let i = 0; i <= 100; i++) { const u = to * i / 100; i ? x.lineTo(X(u), Y(o.f(u))) : x.moveTo(X(u), Y(o.f(u))); } };
+  x.strokeStyle = o.color; x.globalAlpha = .35; x.setLineDash([5, 4]); path(XM); x.stroke(); x.setLineDash([]); x.globalAlpha = 1;
+  x.lineWidth = 2.5; path(o.cx); x.stroke(); x.lineWidth = 1;
+  if (o.fill) { path(o.cx); x.lineTo(X(o.cx), Y(0)); x.lineTo(X(0), Y(0)); x.closePath(); x.globalAlpha = .18; x.fillStyle = o.color; x.fill(); x.globalAlpha = 1; }
+  x.fillStyle = col("--ball"); x.beginPath(); x.arc(X(o.cx), Y(o.f(o.cx)), 5, 0, 7); x.fill();
+}
+
+function draw() {
+  drawStage();
+  chart($("#ct"), { f: u => S.g * u, xm: S.T, ym: S.g * S.T, cx: S.t, color: col("--v"), fill: 1, xl: "t (s)", yl: "v (m/s)", toT: u => u });
+  chart($("#chh"), { f: u => fall(u), xm: S.T, ym: S.h, cx: S.t, color: col("--ok"), xl: "t (s)", yl: "jarak (m)", toT: u => u });
+  chart($("#cv"), { f: u => Math.sqrt(2 * S.g * u), xm: S.h, ym: S.g * S.T, cx: fall(S.t), color: col("--v"), xl: "jarak (m)", yl: "v (m/s)", toT: u => S.g > 0 ? Math.sqrt(2 * u / S.g) : 0 });
+  $("#rt").textContent = n(S.t); $("#ry").textContent = n(Math.max(0, S.h - fall(S.t))); $("#rv").textContent = n(S.g * S.t);
+  $("#ts").value = S.T ? S.t / S.T * 1000 : 0;
+  $("#play").textContent = S.play ? "Jeda" : S.t >= S.T && S.T > 0 ? "Jatuhkan lagi" : S.t > 0 ? "Lanjutkan" : "Jatuhkan";
+}
+
+function loop(ts) {
+  if (S.play) { S.t = Math.min(S.T, S.t + Math.min(.1, (ts - last) / 1000) * S.spd); if (S.t >= S.T) S.play = false; draw(); }
+  last = ts; requestAnimationFrame(loop);
+}
+
+$("#fields").innerHTML = K.map(k => `<div><label for="in-${k}"><span data-tip="${C.besaran[k].tip}" tabindex="0">${C.besaran[k].nama}</span> (${k})</label><input class="f" id="in-${k}" inputmode="decimal" autocomplete="off" placeholder="kosong"></div>`).join("");
+$$(".f").forEach(i => { i.oninput = () => recalc(false); i.onchange = () => recalc(true); });
+$("#ex").innerHTML = C.contoh.map((e, i) => `<button data-i="${i}">${e.l}</button>`).join("");
+$$("#ex button").forEach(b => b.onclick = () => { setIn(C.contoh[b.dataset.i]); recalc(true); });
+$("#planets").innerHTML = Object.keys(C.planet).map(p => `<button data-p="${p}">${p}</button>`).join("");
+$$("#planets button").forEach(b => { b.onclick = () => { $("#in-g").value = n(C.planet[b.dataset.p]); recalc(true); }});
+
+$("#play").onclick = () => { if (S.play) S.play = false; else { if (S.t >= S.T) S.t = 0; S.play = true; } draw(); };
+$("#reset").onclick = () => { S.t = 0; S.play = false; draw(); };
+$("#ts").oninput = e => { S.play = false; S.t = e.target.value / 1000 * S.T; draw(); };
+$$(".spd").forEach(b => b.onclick = () => { S.spd = +b.dataset.s; $$(".spd").forEach(x => x.classList.toggle("on", x === b)); });
+["#tv", "#ta", "#tg"].forEach(s => $(s).onchange = draw);
+
+const st = $("#stage"), pt = e => { const r = st.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+st.onpointerdown = e => {
+  const p = pt(e), by = LY.gy - Math.max(0, S.h - fall(S.t)) / LY.AX * (LY.gy - LY.top) - LY.r;
+  if (Math.hypot(p.x - LY.cx, p.y - by) < LY.r + 16) { S.play = false; S.t = 0; drag = { AX: LY.AX }; st.setPointerCapture(e.pointerId); }
+};
+st.onpointermove = e => {
+  if (!drag || !isPythonReady) return;
+  let hh = (LY.gy - (pt(e).y + LY.r)) / (LY.gy - LY.top) * drag.AX;
+  setIn({ h: Math.round(Math.min(drag.AX, Math.max(0, hh)) * 10) / 10, g: S.g }); recalc(false);
+};
+st.onpointerup = st.onpointercancel = () => { drag = null; draw(); };
+
+$$("canvas.ch").forEach(c => {
+  const mv = e => { if (!e.buttons || !c._o) return; const rc = c.getBoundingClientRect(); S.play = false; S.t = Math.min(S.T, Math.max(0, c._o.toT(Math.min(1, Math.max(0, (e.clientX - rc.left - c._L) / c._pw)) * c._o.xm))); draw(); };
+  c.onpointerdown = e => { c.setPointerCapture(e.pointerId); mv(e); };
+  c.onpointermove = mv;
+});
+
+addEventListener("resize", draw);
+setIn({ h: 20, g: "bumi" });
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
